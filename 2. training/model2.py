@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-import torch, time
+import torch
 import torch.nn as nn
 from torch.nn import functional as F
 import tiktoken
@@ -208,7 +208,6 @@ if __name__ == "__main__":
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-2)
     for i in range(50):
-        t0 = time.time()
         x, y = train_loader.next_batch()  # get next batch of data
         x, y = x.to(device), y.to(device)  # move to device
         model.train()  # set model to training mode
@@ -216,10 +215,7 @@ if __name__ == "__main__":
         logits, loss = model(x, y)
         loss.backward()
         optimizer.step()
-        t1 = time.time()
-        dt = (t1 - t0) * 1000  # time in milliseconds
-        tokens_per_sec = (x.size(0) * x.size(1)) / (t1- t0)  # tokens per second
-        print(f"Step {i}, loss : {loss.item()}, dt: {dt:.2f} ms, tokens/sec: {tokens_per_sec:.2f}")
+        print(f"Step {i}, loss : {loss.item()}")
 
 
     import sys; sys.exit(0)
