@@ -1,0 +1,85 @@
+torch.compiled
+
+Baseline under FP32:
+B = 16, T = 1024
+Step 49, loss : 6.358187675476074,  dt: 340.22 ms, tokens/sec: 48157.21, Memory: 39104, 20859.24 ms
+B = 32, T = 1024
+Step 49, loss : 5.9969305992126465, dt: 669.65 ms, tokens/sec: 48933.07, Memory: 76968
+
+TF32:
+B = 16, T = 1024,     
+Step 49, loss : 6.358736991882324, dt: 133.00 ms, tokens/sec: 123183.87,  Memory: 42246, 20879.86 ms
+B = 16, T = 1024,     torch.backends.cudnn.benchmark = False
+Step 49, loss : 6.358736991882324, dt: 133.96 ms, tokens/sec: 122304.29,  Memory: 42246, 21045.29 ms
+B = 16, T = 1024,     torch.backends.cudnn.benchmark = True
+Step 49, loss : 6.358736991882324, dt: 132.95 ms, tokens/sec: 123238.21, Memory: 42255, 22351.99 ms
+
+B = 32, T = 1024, out of memory, 
+To reduce footprints you need to store tensors in a smaller dtype (FP16/bfloat16) with mixed-precision training (torch.autocast, GradScaler, etc.). 
+TF32 is orthogonal: it just accelerates the GEMMs that still use fp32 storage.
+
+BF16:
+B = 16, T = 1024
+Step 49, loss : 6.35786771774292, dt: 103.14 ms, tokens/sec: 158857.38, Memory: 32806, 24512.58 ms
+B = 32, T = 1024
+Step 49, loss : 5.995821475982666, dt: 197.20 ms, tokens/sec: 166163.26, Memory: 64100, 24141.83 ms, around 600 watts
+
+    torch not compiled
+    BF16
+    B = 32, T = 1024
+    Step 49, loss : 5.9717278480529785, dt: 351.59 ms, tokens/sec: 93199.80, Memory: 67024, 677.84 ms, 550 watts
+
+FlashAttention
+B = 16, T = 1024
+Step 49, loss : 6.358168601989746, dt: 87.71 ms, tokens/sec: 186796.08, Memory: 20047, 21131.58 ms, 560w
+
+B = 32, T = 1024
+Step 49, loss : 5.977290630340576, dt: 167.07 ms, tokens/sec: 196134.30, Memory: 40173, 22232.85 ms, 580 watts
+
+B = 64, T = 1024
+Step 49, loss : 6.309854984283447, dt: 322.03 ms, tokens/sec: 203510.60, Memory: 71086, 21106.93 ms, 600 watts
+
+vocab_size = 50304
+B = 16, T = 1024
+Step 49, loss : 6.344438552856445, dt: 56.20 ms, tokens/sec: 291549.90 Memory: 28989, 20473.14 ms, 620 watt
+B = 32, T = 1024
+Step 49, loss : 6.1723222732543945, dt: 103.06 ms, tokens/sec: 317939.65, Memory: 36304, 20549.18 ms, 670 watt
+B = 64, T = 1024
+Step 49, loss : 6.0859222412109375, dt: 196.53 ms, tokens/sec: 333465.86, Memory: 77426, 20501.64 ms, 680 watts
+
+
+
+
+
+
+
+
+
+Can TF32 ever save real training memory?
+Not by itself. To reduce footprints you need to store tensors in a smaller dtype (FP16/bfloat16) with mixed-precision training (torch.autocast, GradScaler, etc.). TF32 is orthogonal: it just accelerates the GEMMs that still use fp32 storage.
+Key take-aways for your implementation
+Leaving the torch.set_float32_matmul_precision('high') line in is harmless and usually faster; the modest “gain” you see in nvidia-smi without it is just workspace overhead, not model data.
+Don’t expect TF32 to be a memory-saving knob. If memory is tight, move to AMP (autocast fp16/bf16) or reduce batch/sequence length.
+If you profile with nsight-systems or torch.cuda.memory_summary() you’ll observe the transient work-space allocations that explain the discrepancy.
+So your code is not doing anything wrong – the numbers just reflect how cuBLAS picks kernels once TF32 is disabled.
+
+
+
+TF32 only changes the compute path inside GEMM/conv kernels; it does not change how tensors are stored. 
+Your parameters, activations and gradients are still laid out in 32-bit floats, so in theory the peak memory you need for training is identical with or without the line
+the extra bytes are almost never the model’s own tensors – they come from the work-space buffers that cuBLAS/cuDNN pick for the GEMM algorithms they fall back to when TF32 is unavailable.
+
+
+Algorithm choice
+When TF32 is allowed PyTorch asks cuBLASLt for a “TF32-tensorcore” algorithm.
+These kernels often hold their partial results entirely in registers, so they hardly allocate external workspace.
+Once TF32 is disallowed, cuBLASLt switches to a plain‐FP32 algorithm. Some of the high-throughput implementations tile into shared memory / global memory and therefore ask CUDA for a temporary buffer. The buffer size grows with m, n, k so for large (B·T, n_embd) matmuls you can easily see tens or hundreds of MiB.
+
+Even with torch.backends.cudnn.benchmark = False, cuBLASLt still runs a lightweight heuristic pass that queues a handful of candidate kernels. Each of those kernels may request its own workspace; the total of these requests shows up in nvidia-smi while they are inflight. With TF32 the candidate list is shorter.
+
+
+Tips / take-aways
+Keep dimensions that hit cuBLAS/cuDNN aligned to 128 on Hopper if you want the Transformer-Engine kernels.
+For inference you can detach the tied weight, pad it to the nearest 128, run the GEMM, then slice the logits back to 50 257 to avoid changing the vocabulary externally.
+To see what kernels are chosen, build PyTorch with USE_CUDA_NVTX and run with NSYS or Nsight-Compute; you’ll observe the switch from a TC_Hopper_128x... kernel (fast) to mixed fallback kernels when n is misaligned.
+So your observation is expected: Hopper’s new kernels have stricter alignment requirements; satisfy them and you get the large gain you measured, whereas Ampere was already near-optimal. 
