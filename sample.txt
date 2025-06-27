@@ -1,0 +1,70 @@
+(night) ziyangwu@server32:~/yue/own$ python generate.py   --ckpt_dir ckpts   --ckpt_file ckpts/checkpoint_step_0288000.pt   --prompt "Hegel viewed history as a progressive, rational process"   --num_return_sequences 1   --max_length 1024
+Loading checkpoint ckpts/checkpoint_step_0288000.pt on cuda…
+Model weights loaded.
+[Sample 1] Hegel viewed history as a progressive, rational process of
+human reason, ( late the February 29, 1848, to December 10’ time a giving up of
+ On this side every apprehending the world subjected Levin into.
+Let us pass over to what is speculative, however empiric may be
+manifested here by close to us, or relation to ourselves as put
+at least torown. Now the Sophists taught how these powers could be
+moved in empirical man, for the good as ordinarily recognized, no
+longer determined them. Rhetoric, however, teaches how circumstances
+may be made subject to such forces; it even makes use of the wrath
+and passions of the hearer in order to bring about a conclusion. Thus
+the Sophists were more especially the teachers of oratory, and that
+is the aspect in which the individual could make himself esteemed
+amongst the people as well as carry out what was best for the people;
+this certainly characterizes a democratic constitution, in which the
+citizens have the ultimate decision. Because, in this way, oratory was
+one of the first requirements for the rule of a people, or for making
+something clear to them through their ordinary ideas, the Sophists
+trained men for common Greek life, for citizenship and for statesmen,
+without appearing to prepare State officials for an examination in
+specific subjects. For the particular characteristic of eloquence is
+to show the manifold points of view existing in a thing, and to give
+force to those which harmonize with what appears to me to be most
+useful; it thus is the art of putting forward various points of view in
+the concrete case, and placing others rather in the shade. Aristotle’s
+_Topica_ comes to mind in the connection, inasmuch as it gives the
+categories or thought-determinations (_τόπους_), according to which we
+have to regard things in order to learn to speak; but the Sophists were
+the first to apply themselves to a knowledge of these.
+
+This is the position taken up by the Sophists. But we find a perfectly
+definite picture of their further progress and procedure in Plato’s
+Protagoras. Plato here makes Protagoras express himself more precisely
+respecting the art of the Sophists. That is to say, Plato in this
+dialogue represents that Socrates accompanies a young man named
+Hippocrates, who desires to place himself under Protagoras, then newly
+arrived in Athens, for instruction in the science of the Sophists.
+On the way, Socrates now asks Hippocrates what is this wisdom of
+the Sophists which he wishes to learn. Hippocrates at first replies
+Rhetoric, for the Sophist is one who knows how to make men clever
+(_δεινόν_) in speech. In fact, what is most striking in a man or people
+of culture is the art of speaking well, or of turning subjects round
+and considering them in many aspects. The uncultivated man finds it
+unpleasant to associate with people who know how to grasp and express
+every point of view with ease. The French are good speakers in this
+sense, and the Germans call their talking prattle; but it is not mere
+talk that brings about this result, for culture is also wanted. We may
+have mastered a speech quite completely, but if we have not culture,
+it is not good speaking. Men thus learn French, not only to be able
+to speak French well, but to acquire French culture. What is to be
+obtained from the Sophists is thus the power of keeping the manifold
+points of view present to the mind, so that the wealth of categories by
+which an object may be considered, immediately occurs to it. Socrates,
+indeed, remarks that the principle of the Sophists is not hereby
+determined in a sufficiently comprehensive way, and thus it is not
+sufficiently known what a Sophist is, “yet,” he says, “we have a desire
+to go on.”[86] For likewise, if anyone wishes to study Philosophy, he
+does not as yet know what Philosophy is, else he would not need to
+study it.
+
+Having reached Protagoras with Hippocrates, Socrates finds him in
+an assemblage of the foremost Sophists and surrounded by listeners,
+“walking about and like an Orpheus entrancing all men by his words,
+Hippias sitting meanwhile on a chair with not so many round him, and
+Prodicus lying amongst a great number of admirers.” After Socrates
+brought before Protagoras the request to have Hippocrates placed under
+his instruction, in order that he might by him be taught how to become
+eminent in the State, he also asks whether they
